@@ -5,34 +5,44 @@ using System.Collections.Generic;
 
 public class cameraController : MonoBehaviour
 {
+    public float mouseSensitivity = 10;
+    public Transform target;
+    public float dstFromTarget = 2;
 
-    public GameObject player;
-    private Vector3 offset;
+    public Vector2 pitchMinMax = new Vector2(-40, 85);
+
+    public float rotationSmoothTime = .05f;
+    private Vector3 rotationSmoothVelocity;
+    private Vector3 currentRotation;
+
+    private float yaw;
+    private float pitch;
+
+    public bool lockCursor;
 
 
-    // Use this for initialization
     void Start()
     {
-        offset = transform.position - player.transform.position;
+        if (lockCursor)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
 
     // Update is called once per frame
     void LateUpdate()
     {
 
-        transform.position = player.transform.position + offset;
+        yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
+        pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+        pitch = Mathf.Clamp(pitch, pitchMinMax.x, pitchMinMax.y);
 
+        currentRotation = Vector3.SmoothDamp(currentRotation, new Vector3(pitch, yaw), ref rotationSmoothVelocity, rotationSmoothTime);
 
-        //Get rid of this crap as soon as possible, worst camera I ever made LOLOLOLOLOLLOLOLLOLOLOLOLOLOLOLOL
-        if (Input.GetKey(KeyCode.Q))
-        {
-            transform.Rotate(-Vector3.up * 100 * Time.deltaTime);
-        }
+        //Vector3 targetRotation = new Vector3(pitch, yaw);
+        transform.eulerAngles = currentRotation;
 
-        if (Input.GetKey(KeyCode.E))
-        {
-            transform.Rotate(Vector3.up * 100 * Time.deltaTime);
-        }
-
+        transform.position = target.position - transform.forward * dstFromTarget;
     }
 }

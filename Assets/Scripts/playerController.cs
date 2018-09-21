@@ -1,58 +1,44 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Boo.Lang;
+using UnityEditor;
 using UnityEngine;
 
 public class playerController : MonoBehaviour
 {
-
-    private Rigidbody _rb;
-
-    //[SerializeField]
-    public float walkingSpeed = 2f;
-
-    //[SerializeField]
-    public float currentSpeed;
     
-    //[SerializeField]
-    public float sprintSpeed = 900f;
+    public float walkSpeed = 6f;
+    public float runSpeed = 15f;
 
+    public float turnSmoothTime = .2f;
+    private float turnSmoothVelocity;
 
-
+    Transform cameraM;
 
 
     // Use this for initialization
     void Start()
     {
-
-       _rb = GetComponent<Rigidbody>();
-
+        cameraM = Camera.main.transform;
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
 
-     
-        float moveHorizontal = Input.GetAxis("Horizontal") * Time.deltaTime * 8f;
- 
+        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        Vector2 inputDir = input.normalized;
 
-        float moveVertical = Input.GetAxis("Vertical") * Time.deltaTime * 8f;
-
-
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-
-
-
-        if ((Input.GetKeyDown(KeyCode.LeftShift) == true))
+        if (inputDir != Vector2.zero)
         {
-            currentSpeed = sprintSpeed;
-        }
-        else
-        {
-            currentSpeed = walkingSpeed;
+            float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + cameraM.eulerAngles.y;
+            transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
         }
 
-        _rb.AddForce(movement * currentSpeed);
+        bool running = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        float speed = ((running) ? runSpeed : walkSpeed) * inputDir.magnitude;                                                         // If were running then runspeed else walkspeed
+
+        transform.Translate(transform.forward * speed * Time.deltaTime, Space.World);
 
     }
 }
